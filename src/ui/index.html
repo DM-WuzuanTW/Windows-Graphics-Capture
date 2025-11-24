@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Window Exclusion Tool</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- 自訂標題列 -->
+  <div class="titlebar">
+    <div class="titlebar-drag-region">
+      <div class="titlebar-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+          <line x1="15" y1="9" x2="9" y2="15"></line>
+        </svg>
+      </div>
+      <div class="titlebar-title">Window Exclusion Tool</div>
+    </div>
+    <div class="titlebar-controls">
+      <button class="titlebar-button" id="minimize-btn" title="最小化">
+        <svg width="12" height="12" viewBox="0 0 12 12">
+          <line x1="0" y1="6" x2="12" y2="6" stroke="currentColor" stroke-width="1"></line>
+        </svg>
+      </button>
+      <button class="titlebar-button" id="maximize-btn" title="最大化">
+        <svg width="12" height="12" viewBox="0 0 12 12">
+          <rect x="0" y="0" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1"></rect>
+        </svg>
+      </button>
+      <button class="titlebar-button close-btn" id="close-btn" title="關閉">
+        <svg width="12" height="12" viewBox="0 0 12 12">
+          <line x1="0" y1="0" x2="12" y2="12" stroke="currentColor" stroke-width="1"></line>
+          <line x1="12" y1="0" x2="0" y2="12" stroke="currentColor" stroke-width="1"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- 主要內容區 -->
+  <div class="container">
+    <!-- 左側面板：可用視窗列表 -->
+    <div class="panel left-panel">
+      <div class="panel-header">
+        <h2>可用視窗</h2>
+        <div class="search-box">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="M21 21l-4.35-4.35"></path>
+          </svg>
+          <input type="text" id="search-input" placeholder="搜尋視窗..." autocomplete="off">
+        </div>
+        <div class="panel-stats">
+          <span id="window-count">0</span> 個視窗
+        </div>
+      </div>
+      <div class="panel-content">
+        <div id="window-list" class="window-list">
+          <div class="loading-indicator">
+            <div class="spinner"></div>
+            <p>正在載入視窗列表...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 中央控制區 -->
+    <div class="center-controls">
+      <button class="control-button add-btn" id="add-exclusion-btn" title="新增排除" disabled>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+      <div class="control-divider"></div>
+      <button class="control-button remove-btn" id="remove-exclusion-btn" title="移除排除" disabled>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- 右側面板：已排除視窗列表 -->
+    <div class="panel right-panel">
+      <div class="panel-header">
+        <h2>已排除視窗</h2>
+        <div class="panel-stats">
+          <span id="excluded-count">0</span> 個視窗被排除
+        </div>
+      </div>
+      <div class="panel-content">
+        <div id="excluded-list" class="window-list">
+          <div class="empty-state">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"></path>
+            </svg>
+            <p>尚未排除任何視窗</p>
+            <p class="hint">從左側選擇視窗並點擊新增按鈕</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 狀態列 -->
+  <div class="statusbar">
+    <div class="status-item">
+      <div class="status-indicator" id="status-indicator"></div>
+      <span id="status-text">就緒</span>
+    </div>
+    <div class="status-item">
+      <span id="api-status">Windows Graphics Capture API: 正常</span>
+    </div>
+  </div>
+
+  <!-- 通知容器 -->
+  <div id="notification-container"></div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

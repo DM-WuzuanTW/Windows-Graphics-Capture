@@ -1,0 +1,25 @@
+node_modules/
+dist/
+build/
+
+# Electron
+out/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Config
+config.json
+
+# Temp
+temp/
+tmp/

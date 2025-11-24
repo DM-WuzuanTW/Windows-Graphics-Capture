@@ -1,0 +1,38 @@
+{
+    "name": "window-exclusion-tool",
+    "version": "1.0.0",
+    "description": "Windows Graphics Capture - Window Exclusion Tool",
+    "main": "src/main.js",
+    "scripts": {
+        "start": "electron .",
+        "dev": "electron . --dev",
+        "rebuild": "electron-rebuild",
+        "build": "electron-builder",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "windows",
+        "graphics-capture",
+        "screen-capture",
+        "privacy",
+        "electron"
+    ],
+    "author": "",
+    "license": "MIT",
+    "devDependencies": {
+        "electron": "^27.0.0",
+        "electron-builder": "^24.6.4",
+        "electron-rebuild": "^3.2.9"
+    },
+    "dependencies": {
+        "koffi": "^2.9.2"
+    },
+    "build": {
+        "appId": "com.windowexclusion.app",
+        "productName": "Window Exclusion Tool",
+        "win": {
+            "target": "nsis",
+            "icon": "assets/icon.ico"
+        }
+    }
+}

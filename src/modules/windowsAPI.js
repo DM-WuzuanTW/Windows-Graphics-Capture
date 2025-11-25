@@ -31,6 +31,7 @@ class WindowsAPI {
             this.OpenProcess = this.kernel32.func('long OpenProcess(uint32 dwDesiredAccess, bool bInheritHandle, uint32 dwProcessId)');
             this.CloseHandle = this.kernel32.func('bool CloseHandle(long hObject)');
             this.K32GetModuleBaseNameW = this.kernel32.func('uint32 K32GetModuleBaseNameW(long hProcess, long hModule, uint16 *lpBaseName, uint32 nSize)');
+            this.QueryFullProcessImageNameW = this.kernel32.func('bool QueryFullProcessImageNameW(long hProcess, uint32 dwFlags, uint16 *lpExeName, uint32 *lpdwSize)');
             this.GetLastError = this.kernel32.func('uint32 GetLastError()');
 
             // EnumWindows - 使用 void* 作為回調參數，避免類型定義問題

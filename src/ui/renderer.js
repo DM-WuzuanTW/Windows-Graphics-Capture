@@ -146,23 +146,28 @@ function renderWindowList(windows) {
         const lockIcon = isFailed ? '<span class="status-icon" title="權限不足">🔒</span>' : '';
         const itemClass = isFailed ? 'window-item failed' : 'window-item';
 
+        // Use real icon if available, otherwise fallback to SVG
+        const iconHtml = window.icon
+            ? `<img src="${window.icon}" class="window-icon-img" alt="icon" style="width: 20px; height: 20px;">`
+            : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+               </svg>`;
+
         return `
-     <div class="${itemClass}" data-hwnd="${window.hwnd}">
-       <div class="window-icon">
-         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-           <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-         </svg>
-       </div>
-       <div class="window-info">
-         <div class="window-title" title="${escapeHtml(window.title)}">
-           ${escapeHtml(window.title)} ${lockIcon}
-         </div>
-         <div class="window-process" title="${escapeHtml(window.processName)}">
-           ${escapeHtml(window.processName)}
-         </div>
-       </div>
-     </div>
-   `}).join('');
+      <div class="${itemClass}" data-hwnd="${window.hwnd}">
+        <div class="window-icon">
+          ${iconHtml}
+        </div>
+        <div class="window-info">
+          <div class="window-title" title="${escapeHtml(window.title)}">
+            ${escapeHtml(window.title)} ${lockIcon}
+          </div>
+          <div class="window-process" title="${escapeHtml(window.processName)}">
+            ${escapeHtml(window.processName)}
+          </div>
+        </div>
+      </div>
+    `}).join('');
 
     elements.windowList.innerHTML = html;
 
@@ -178,34 +183,40 @@ function renderWindowList(windows) {
 function renderExcludedList(windows) {
     if (windows.length === 0) {
         elements.excludedList.innerHTML = `
-       <div class="empty-state">
-         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-           <path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"></path>
-         </svg>
-         <p>尚未排除任何視窗</p>
-         <p class="hint">從左側選擇視窗並點擊新增按鈕</p>
-       </div>
-     `;
+        <div class="empty-state">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"></path>
+          </svg>
+          <p>尚未排除任何視窗</p>
+          <p class="hint">從左側選擇視窗並點擊新增按鈕</p>
+        </div>
+      `;
         return;
     }
 
-    const html = windows.map(window => `
-     <div class="window-item" data-hwnd="${window.hwnd}">
-       <div class="window-icon">
-         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-           <path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"></path>
-         </svg>
-       </div>
-       <div class="window-info">
-         <div class="window-title" title="${escapeHtml(window.title)}">
-           ${escapeHtml(window.title)}
-         </div>
-         <div class="window-process" title="${escapeHtml(window.processName)}">
-           ${escapeHtml(window.processName)}
-         </div>
-       </div>
-     </div>
-   `).join('');
+    const html = windows.map(window => {
+        // Use real icon if available, otherwise fallback to SVG
+        const iconHtml = window.icon
+            ? `<img src="${window.icon}" class="window-icon-img" alt="icon" style="width: 20px; height: 20px;">`
+            : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                 <path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"></path>
+               </svg>`;
+
+        return `
+      <div class="window-item" data-hwnd="${window.hwnd}">
+        <div class="window-icon">
+          ${iconHtml}
+        </div>
+        <div class="window-info">
+          <div class="window-title" title="${escapeHtml(window.title)}">
+            ${escapeHtml(window.title)}
+          </div>
+          <div class="window-process" title="${escapeHtml(window.processName)}">
+            ${escapeHtml(window.processName)}
+          </div>
+        </div>
+      </div>
+    `}).join('');
 
     elements.excludedList.innerHTML = html;
 
@@ -416,15 +427,10 @@ function showNotification(message, type = 'info') {
 
 // ===== 工具函數 =====
 function escapeHtml(text) {
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, m => map[m]);
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
-// ===== 應用程式啟動 =====
-document.addEventListener('DOMContentLoaded', initialize);
+// 啟動應用
+initialize();

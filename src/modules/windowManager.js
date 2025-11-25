@@ -1,5 +1,6 @@
 const koffi = require('koffi');
 const { getAPI } = require('./windowsAPI');
+const { app } = require('electron');
 
 // Define callback type once
 const EnumWindowsProc = koffi.proto('bool __stdcall EnumWindowsProc(long hwnd, long lParam)');
@@ -10,6 +11,8 @@ class WindowManager {
         this.monitoringInterval = null;
         this.updateInterval = 2000;
         this.api = getAPI();
+        // Cache for icons to avoid repeated fetching
+        this.iconCache = new Map();
     }
 
     enumerateWindows() {
@@ -31,6 +34,7 @@ class WindowManager {
                     self.api.GetWindowThreadProcessId(hwnd, pidBuf);
                     const pid = pidBuf.readUInt32LE(0);
                     const procName = self.getProcessName(pid);
+                    const procPath = self.getProcessPath(pid);
 
                     const clsBuf = Buffer.alloc(512);
                     self.api.GetClassNameW(hwnd, clsBuf, 256);
@@ -38,7 +42,15 @@ class WindowManager {
 
                     if (self.shouldFilterWindow(title, clsName, procName)) return true;
 
-                    windows.push({ hwnd: Number(hwnd), title, processName: procName, pid, className: clsName, timestamp: Date.now() });
+                    windows.push({
+                        hwnd: Number(hwnd),
+                        title,
+                        processName: procName,
+                        processPath: procPath,
+                        pid,
+                        className: clsName,
+                        timestamp: Date.now()
+                    });
                 } catch (e) { }
                 return true;
             }, koffi.pointer(EnumWindowsProc));
@@ -63,14 +75,56 @@ class WindowManager {
         } catch (e) { return 'Unknown'; }
     }
 
+    getProcessPath(pid) {
+        if (!this.api.initialized) return '';
+        try {
+            // PROCESS_QUERY_LIMITED_INFORMATION (0x1000) is often enough for QueryFullProcessImageName
+            // But we use 0x0410 (PROCESS_QUERY_INFORMATION | PROCESS_VM_READ) as before
+            const hProcess = this.api.OpenProcess(0x0410, false, pid);
+            if (!hProcess) return '';
+
+            const size = 1024;
+            const buf = Buffer.alloc(size * 2);
+            const sizeBuf = Buffer.alloc(4);
+            sizeBuf.writeUInt32LE(size, 0);
+
+            // 0 = PROCESS_NAME_WIN32
+            const res = this.api.QueryFullProcessImageNameW(hProcess, 0, buf, sizeBuf);
+            this.api.CloseHandle(hProcess);
+
+            return res ? buf.toString('utf16le').replace(/\0/g, '') : '';
+        } catch (e) { return ''; }
+    }
+
     shouldFilterWindow(title, cls, proc) {
         const clsList = ['Shell_TrayWnd', 'DV2ControlHost', 'MsgrIMEWindowClass', 'SysShadow', 'Button', 'Windows.UI.Core.CoreWindow', 'ApplicationFrameWindow'];
         const procList = ['ApplicationFrameHost.exe', 'TextInputHost.exe', 'ShellExperienceHost.exe', 'StartMenuExperienceHost.exe', 'SearchHost.exe'];
         return clsList.includes(cls) || procList.includes(proc);
     }
 
-    getWindowList() {
-        this.windows = this.enumerateWindows();
+    async getWindowList() {
+        const rawWindows = this.enumerateWindows();
+
+        // Enrich with icons
+        const enrichedWindows = await Promise.all(rawWindows.map(async (win) => {
+            // Use cached icon if available
+            if (this.iconCache.has(win.processPath)) {
+                win.icon = this.iconCache.get(win.processPath);
+            } else if (win.processPath) {
+                try {
+                    const nativeImage = await app.getFileIcon(win.processPath);
+                    const iconData = nativeImage.toDataURL();
+                    this.iconCache.set(win.processPath, iconData);
+                    win.icon = iconData;
+                } catch (e) {
+                    // console.warn(`Failed to get icon for ${win.processPath}:`, e);
+                    win.icon = null;
+                }
+            }
+            return win;
+        }));
+
+        this.windows = enrichedWindows;
         console.log(`Found ${this.windows.length} windows`);
         return this.windows;
     }

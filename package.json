@@ -64,7 +64,7 @@
             "requestedExecutionLevel": "requireAdministrator"
         },
         "portable": {
-            "artifactName": "${productName} ${version} Portable.${ext}"
+            "artifactName": "${productName} ${version}.${ext}"
         },
         "nsis": {
             "oneClick": false,

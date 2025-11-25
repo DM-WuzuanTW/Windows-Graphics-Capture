@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Window Exclusion Tool</title>
+  <title>Hide live</title>
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
   <!-- 自訂標題列 -->
   <div class="titlebar">
@@ -17,7 +19,7 @@
           <line x1="15" y1="9" x2="9" y2="15"></line>
         </svg>
       </div>
-      <div class="titlebar-title">Window Exclusion Tool</div>
+      <div class="titlebar-title">invisibility Windows</div>
     </div>
     <div class="titlebar-controls">
       <button class="titlebar-button" id="minimize-btn" title="最小化">
@@ -46,7 +48,8 @@
       <div class="panel-header">
         <h2>可用視窗</h2>
         <div class="search-box">
-          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
             <circle cx="11" cy="11" r="8"></circle>
             <path d="M21 21l-4.35-4.35"></path>
           </svg>
@@ -94,7 +97,9 @@
         <div id="excluded-list" class="window-list">
           <div class="empty-state">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"></path>
+              <path
+                d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88">
+              </path>
             </svg>
             <p>尚未排除任何視窗</p>
             <p class="hint">從左側選擇視窗並點擊新增按鈕</p>
@@ -120,4 +125,5 @@
 
   <script src="renderer.js"></script>
 </body>
+
 </html>

@@ -1,6 +1,5 @@
 const koffi = require('koffi');
 
-// Windows 常數
 const WDA_NONE = 0x00000000;
 const WDA_EXCLUDEFROMCAPTURE = 0x00000011;
 const PROCESS_QUERY_INFORMATION = 0x0400;
@@ -19,7 +18,6 @@ class WindowsAPI {
             this.user32 = koffi.load('user32.dll');
             this.kernel32 = koffi.load('kernel32.dll');
 
-            // 定義不依賴回調的函數
             this.GetWindowTextW = this.user32.func('int GetWindowTextW(long hWnd, uint16 *lpString, int nMaxCount)');
             this.GetWindowTextLengthW = this.user32.func('int GetWindowTextLengthW(long hWnd)');
             this.IsWindowVisible = this.user32.func('bool IsWindowVisible(long hWnd)');
@@ -33,9 +31,6 @@ class WindowsAPI {
             this.K32GetModuleBaseNameW = this.kernel32.func('uint32 K32GetModuleBaseNameW(long hProcess, long hModule, uint16 *lpBaseName, uint32 nSize)');
             this.QueryFullProcessImageNameW = this.kernel32.func('bool QueryFullProcessImageNameW(long hProcess, uint32 dwFlags, uint16 *lpExeName, uint32 *lpdwSize)');
             this.GetLastError = this.kernel32.func('uint32 GetLastError()');
-
-            // EnumWindows - 使用 void* 作為回調參數，避免類型定義問題
-            // 我們會在調用時傳入註冊好的回調函數指針
             this.EnumWindows = this.user32.func('bool EnumWindows(void *lpEnumFunc, long lParam)');
 
             this.initialized = true;
@@ -48,7 +43,6 @@ class WindowsAPI {
     }
 }
 
-// 全域 API 實例
 let apiInstance = null;
 
 function getAPI() {

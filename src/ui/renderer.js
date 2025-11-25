@@ -1,60 +1,47 @@
 const { ipcRenderer } = require('electron');
 
-// 狀態管理
 let selectedWindow = null;
 let selectedExcludedWindow = null;
 let allWindows = [];
 let excludedWindows = [];
 let updateInterval = null;
-let lastWindowsHash = null; // 初始化為 null，確保第一次一定會渲染
-const failedWindows = new Set(); // 存儲操作失敗的視窗 hwnd
+let lastWindowsHash = null;
+const failedWindows = new Set();
 
-// DOM 元素
 const elements = {
-    // 標題列控制
     minimizeBtn: document.getElementById('minimize-btn'),
     maximizeBtn: document.getElementById('maximize-btn'),
     closeBtn: document.getElementById('close-btn'),
 
-    // 搜尋和列表
     searchInput: document.getElementById('search-input'),
     windowList: document.getElementById('window-list'),
     excludedList: document.getElementById('excluded-list'),
 
-    // 控制按鈕
     addBtn: document.getElementById('add-exclusion-btn'),
     removeBtn: document.getElementById('remove-exclusion-btn'),
 
-    // 統計資訊
     windowCount: document.getElementById('window-count'),
     excludedCount: document.getElementById('excluded-count'),
 
-    // 狀態
     statusText: document.getElementById('status-text'),
     statusIndicator: document.getElementById('status-indicator')
 };
 
-// ===== 初始化 =====
 async function initialize() {
     console.log('Initializing application...');
 
-    // 設定事件監聽器
     setupEventListeners();
 
-    // 載入視窗列表
     await loadWindows();
     await loadExcludedWindows();
 
-    // 開始定期更新
     startAutoUpdate();
 
     updateStatus('就緒', 'success');
     console.log('Application initialized');
 }
 
-// ===== 事件監聽器 =====
 function setupEventListeners() {
-    // 標題列控制
     elements.minimizeBtn.addEventListener('click', () => {
         ipcRenderer.send('window-minimize');
     });
@@ -67,16 +54,13 @@ function setupEventListeners() {
         ipcRenderer.send('window-close');
     });
 
-    // 搜尋功能
     elements.searchInput.addEventListener('input', (e) => {
         filterWindows(e.target.value);
     });
 
-    // 控制按鈕
     elements.addBtn.addEventListener('click', handleAddExclusion);
     elements.removeBtn.addEventListener('click', handleRemoveExclusion);
 
-    // 快捷鍵
     document.addEventListener('keydown', (e) => {
         if (e.key === 'F5') {
             e.preventDefault();
@@ -85,7 +69,6 @@ function setupEventListeners() {
     });
 }
 
-// ===== 載入視窗列表 =====
 async function loadWindows() {
     try {
         updateStatus('正在載入視窗列表...', 'loading');
@@ -104,7 +87,6 @@ async function loadWindows() {
     }
 }
 
-// ===== 載入已排除的視窗列表 =====
 async function loadExcludedWindows() {
     try {
         excludedWindows = await ipcRenderer.invoke('get-excluded-windows');
@@ -118,10 +100,7 @@ async function loadExcludedWindows() {
     }
 }
 
-// ===== 渲染視窗列表 =====
 function renderWindowList(windows) {
-    // 簡單的 hash 檢查，避免不必要的重繪
-    // 加入 failedWindows 的狀態到 hash 中，確保狀態改變時會重繪
     const failedState = Array.from(failedWindows).join(',');
     const currentHash = windows.map(w => w.hwnd + w.title + w.processName).join('|') + failedState;
 
@@ -146,7 +125,6 @@ function renderWindowList(windows) {
         const lockIcon = isFailed ? '<span class="status-icon" title="權限不足">🔒</span>' : '';
         const itemClass = isFailed ? 'window-item failed' : 'window-item';
 
-        // Use real icon if available, otherwise fallback to SVG
         const iconHtml = window.icon
             ? `<img src="${window.icon}" class="window-icon-img" alt="icon" style="width: 20px; height: 20px;">`
             : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -171,7 +149,6 @@ function renderWindowList(windows) {
 
     elements.windowList.innerHTML = html;
 
-    // 綁定點擊事件
     document.querySelectorAll('#window-list .window-item').forEach(item => {
         item.addEventListener('click', () => {
             selectWindow(item);
@@ -179,7 +156,6 @@ function renderWindowList(windows) {
     });
 }
 
-// ===== 渲染已排除列表 =====
 function renderExcludedList(windows) {
     if (windows.length === 0) {
         elements.excludedList.innerHTML = `
@@ -195,7 +171,6 @@ function renderExcludedList(windows) {
     }
 
     const html = windows.map(window => {
-        // Use real icon if available, otherwise fallback to SVG
         const iconHtml = window.icon
             ? `<img src="${window.icon}" class="window-icon-img" alt="icon" style="width: 20px; height: 20px;">`
             : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -220,7 +195,6 @@ function renderExcludedList(windows) {
 
     elements.excludedList.innerHTML = html;
 
-    // 綁定點擊事件
     document.querySelectorAll('#excluded-list .window-item').forEach(item => {
         item.addEventListener('click', () => {
             selectExcludedWindow(item);
@@ -228,23 +202,18 @@ function renderExcludedList(windows) {
     });
 }
 
-// ===== 選擇視窗 =====
 function selectWindow(item) {
-    // 移除之前的選取
     document.querySelectorAll('#window-list .window-item').forEach(i => {
         i.classList.remove('selected');
     });
 
-    // 選取當前項目
     item.classList.add('selected');
 
     const hwnd = parseInt(item.dataset.hwnd);
     selectedWindow = allWindows.find(w => w.hwnd === hwnd);
 
-    // 啟用新增按鈕
     elements.addBtn.disabled = false;
 
-    // 清除已排除列表的選取
     selectedExcludedWindow = null;
     document.querySelectorAll('#excluded-list .window-item').forEach(i => {
         i.classList.remove('selected');
@@ -252,23 +221,18 @@ function selectWindow(item) {
     elements.removeBtn.disabled = true;
 }
 
-// ===== 選擇已排除的視窗 =====
 function selectExcludedWindow(item) {
-    // 移除之前的選取
     document.querySelectorAll('#excluded-list .window-item').forEach(i => {
         i.classList.remove('selected');
     });
 
-    // 選取當前項目
     item.classList.add('selected');
 
     const hwnd = parseInt(item.dataset.hwnd);
     selectedExcludedWindow = excludedWindows.find(w => w.hwnd === hwnd);
 
-    // 啟用移除按鈕
     elements.removeBtn.disabled = false;
 
-    // 清除可用列表的選取
     selectedWindow = null;
     document.querySelectorAll('#window-list .window-item').forEach(i => {
         i.classList.remove('selected');
@@ -276,7 +240,6 @@ function selectExcludedWindow(item) {
     elements.addBtn.disabled = true;
 }
 
-// ===== 新增排除 =====
 async function handleAddExclusion() {
     if (!selectedWindow) return;
 
@@ -288,15 +251,12 @@ async function handleAddExclusion() {
         if (result.success) {
             showNotification(`已排除視窗: ${selectedWindow.title}`, 'success');
 
-            // 成功後從失敗列表中移除（如果有的話）
             if (failedWindows.has(selectedWindow.hwnd)) {
                 failedWindows.delete(selectedWindow.hwnd);
             }
 
-            // 重新載入列表
             await loadExcludedWindows();
 
-            // 清除選取
             selectedWindow = null;
             elements.addBtn.disabled = true;
             document.querySelectorAll('#window-list .window-item').forEach(i => {
@@ -307,10 +267,8 @@ async function handleAddExclusion() {
         } else {
             showNotification(result.message, 'error');
 
-            // 如果是權限錯誤，記錄下來
             if (result.message.includes('權限不足') || result.message.includes('Error Code: 5')) {
                 failedWindows.add(selectedWindow.hwnd);
-                // 強制刷新列表以顯示鎖定圖示
                 lastWindowsHash = '';
                 renderWindowList(allWindows);
             }
@@ -324,7 +282,6 @@ async function handleAddExclusion() {
     }
 }
 
-// ===== 移除排除 =====
 async function handleRemoveExclusion() {
     if (!selectedExcludedWindow) return;
 
@@ -336,10 +293,8 @@ async function handleRemoveExclusion() {
         if (result.success) {
             showNotification(`已恢復視窗: ${selectedExcludedWindow.title}`, 'success');
 
-            // 重新載入列表
             await loadExcludedWindows();
 
-            // 清除選取
             selectedExcludedWindow = null;
             elements.removeBtn.disabled = true;
             document.querySelectorAll('#excluded-list .window-item').forEach(i => {
@@ -358,7 +313,6 @@ async function handleRemoveExclusion() {
     }
 }
 
-// ===== 過濾視窗 =====
 function filterWindows(query) {
     if (!query) {
         renderWindowList(allWindows);
@@ -373,15 +327,12 @@ function filterWindows(query) {
     renderWindowList(filtered);
 }
 
-// ===== 自動更新 =====
 function startAutoUpdate() {
-    // 每 2 秒更新一次
     updateInterval = setInterval(async () => {
         await loadWindows();
     }, 2000);
 }
 
-// ===== 更新狀態 =====
 function updateStatus(text, type = 'success') {
     elements.statusText.textContent = text;
 
@@ -397,7 +348,6 @@ function updateStatus(text, type = 'success') {
     }
 }
 
-// ===== 顯示通知 =====
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
@@ -416,7 +366,6 @@ function showNotification(message, type = 'info') {
     const container = document.getElementById('notification-container');
     container.appendChild(notification);
 
-    // 3 秒後自動移除
     setTimeout(() => {
         notification.style.animation = 'slideIn 0.3s ease reverse';
         setTimeout(() => {
@@ -425,12 +374,10 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-// ===== 工具函數 =====
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
 
-// 啟動應用
 initialize();

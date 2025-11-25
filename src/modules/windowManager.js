@@ -2,7 +2,6 @@ const koffi = require('koffi');
 const { getAPI } = require('./windowsAPI');
 const { app } = require('electron');
 
-// Define callback type once
 const EnumWindowsProc = koffi.proto('bool __stdcall EnumWindowsProc(long hwnd, long lParam)');
 
 class WindowManager {
@@ -11,7 +10,6 @@ class WindowManager {
         this.monitoringInterval = null;
         this.updateInterval = 2000;
         this.api = getAPI();
-        // Cache for icons to avoid repeated fetching
         this.iconCache = new Map();
     }
 
@@ -78,8 +76,6 @@ class WindowManager {
     getProcessPath(pid) {
         if (!this.api.initialized) return '';
         try {
-            // PROCESS_QUERY_LIMITED_INFORMATION (0x1000) is often enough for QueryFullProcessImageName
-            // But we use 0x0410 (PROCESS_QUERY_INFORMATION | PROCESS_VM_READ) as before
             const hProcess = this.api.OpenProcess(0x0410, false, pid);
             if (!hProcess) return '';
 
@@ -88,7 +84,6 @@ class WindowManager {
             const sizeBuf = Buffer.alloc(4);
             sizeBuf.writeUInt32LE(size, 0);
 
-            // 0 = PROCESS_NAME_WIN32
             const res = this.api.QueryFullProcessImageNameW(hProcess, 0, buf, sizeBuf);
             this.api.CloseHandle(hProcess);
 
@@ -105,9 +100,7 @@ class WindowManager {
     async getWindowList() {
         const rawWindows = this.enumerateWindows();
 
-        // Enrich with icons
         const enrichedWindows = await Promise.all(rawWindows.map(async (win) => {
-            // Use cached icon if available
             if (this.iconCache.has(win.processPath)) {
                 win.icon = this.iconCache.get(win.processPath);
             } else if (win.processPath) {
@@ -117,7 +110,6 @@ class WindowManager {
                     this.iconCache.set(win.processPath, iconData);
                     win.icon = iconData;
                 } catch (e) {
-                    // console.warn(`Failed to get icon for ${win.processPath}:`, e);
                     win.icon = null;
                 }
             }

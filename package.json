@@ -10,6 +10,10 @@
         "build": "electron-builder",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DM-WuzuanTW/Windows-Graphics-Capture.git"
+    },
     "keywords": [
         "windows",
         "graphics-capture",
@@ -30,6 +34,13 @@
     "build": {
         "appId": "com.invisibility.windows",
         "productName": "Invisibility Windows",
+        "publish": [
+            {
+                "provider": "github",
+                "owner": "DM-WuzuanTW",
+                "repo": "Windows-Graphics-Capture"
+            }
+        ],
         "directories": {
             "output": "dist"
         },

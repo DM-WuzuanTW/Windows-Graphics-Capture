@@ -45,9 +45,15 @@
             "!dll/*.cpp"
         ],
         "win": {
-            "target": "nsis",
+            "target": [
+                "nsis",
+                "portable"
+            ],
             "icon": "build/icon.png",
             "requestedExecutionLevel": "requireAdministrator"
+        },
+        "portable": {
+            "artifactName": "${productName} ${version} Portable.${ext}"
         },
         "nsis": {
             "oneClick": false,

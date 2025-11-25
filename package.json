@@ -28,11 +28,34 @@
         "koffi": "^2.9.2"
     },
     "build": {
-        "appId": "com.windowexclusion.app",
-        "productName": "Window Exclusion Tool",
+        "appId": "com.invisibility.windows",
+        "productName": "Invisibility Windows",
+        "directories": {
+            "output": "dist"
+        },
+        "files": [
+            "**/*",
+            "!**/*.ts",
+            "!*.map",
+            "!package-lock.json",
+            "!dist/**/*",
+            "!dll/*.obj",
+            "!dll/*.lib",
+            "!dll/*.exp",
+            "!dll/*.cpp"
+        ],
         "win": {
             "target": "nsis",
-            "icon": "assets/icon.ico"
+            "icon": "build/icon.png",
+            "requestedExecutionLevel": "requireAdministrator"
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true,
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true,
+            "shortcutName": "Invisibility Windows",
+            "deleteAppDataOnUninstall": true
         }
     }
 }

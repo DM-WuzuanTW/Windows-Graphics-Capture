@@ -8,6 +8,7 @@
         "dev": "electron . --dev",
         "rebuild": "electron-rebuild",
         "build": "electron-builder",
+        "build-dll": "node scripts/buildDll.js",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": [

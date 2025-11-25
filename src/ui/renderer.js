@@ -6,6 +6,8 @@ let selectedExcludedWindow = null;
 let allWindows = [];
 let excludedWindows = [];
 let updateInterval = null;
+let lastWindowsHash = null; // 初始化為 null，確保第一次一定會渲染
+const failedWindows = new Set(); // 存儲操作失敗的視窗 hwnd
 
 // DOM 元素
 const elements = {
@@ -116,46 +118,51 @@ async function loadExcludedWindows() {
     }
 }
 
-// 緩存上次的視窗列表 hash
-let lastWindowsHash = '';
-
 // ===== 渲染視窗列表 =====
 function renderWindowList(windows) {
     // 簡單的 hash 檢查，避免不必要的重繪
-    const currentHash = windows.map(w => w.hwnd + w.title + w.processName).join('|');
+    // 加入 failedWindows 的狀態到 hash 中，確保狀態改變時會重繪
+    const failedState = Array.from(failedWindows).join(',');
+    const currentHash = windows.map(w => w.hwnd + w.title + w.processName).join('|') + failedState;
+
     if (currentHash === lastWindowsHash) return;
     lastWindowsHash = currentHash;
 
     if (windows.length === 0) {
         elements.windowList.innerHTML = `
-      <div class="empty-state">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-          <line x1="9" y1="9" x2="15" y2="15"></line>
-        </svg>
-        <p>未找到任何視窗</p>
-      </div>
-    `;
+       <div class="empty-state">
+         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+           <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+           <line x1="9" y1="9" x2="15" y2="15"></line>
+         </svg>
+         <p>未找到任何視窗</p>
+       </div>
+     `;
         return;
     }
 
-    const html = windows.map(window => `
-    <div class="window-item" data-hwnd="${window.hwnd}">
-      <div class="window-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-        </svg>
-      </div>
-      <div class="window-info">
-        <div class="window-title" title="${escapeHtml(window.title)}">
-          ${escapeHtml(window.title)}
-        </div>
-        <div class="window-process" title="${escapeHtml(window.processName)}">
-          ${escapeHtml(window.processName)}
-        </div>
-      </div>
-    </div>
-  `).join('');
+    const html = windows.map(window => {
+        const isFailed = failedWindows.has(window.hwnd);
+        const lockIcon = isFailed ? '<span class="status-icon" title="權限不足">🔒</span>' : '';
+        const itemClass = isFailed ? 'window-item failed' : 'window-item';
+
+        return `
+     <div class="${itemClass}" data-hwnd="${window.hwnd}">
+       <div class="window-icon">
+         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+           <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+         </svg>
+       </div>
+       <div class="window-info">
+         <div class="window-title" title="${escapeHtml(window.title)}">
+           ${escapeHtml(window.title)} ${lockIcon}
+         </div>
+         <div class="window-process" title="${escapeHtml(window.processName)}">
+           ${escapeHtml(window.processName)}
+         </div>
+       </div>
+     </div>
+   `}).join('');
 
     elements.windowList.innerHTML = html;
 
@@ -171,34 +178,34 @@ function renderWindowList(windows) {
 function renderExcludedList(windows) {
     if (windows.length === 0) {
         elements.excludedList.innerHTML = `
-      <div class="empty-state">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"></path>
-        </svg>
-        <p>尚未排除任何視窗</p>
-        <p class="hint">從左側選擇視窗並點擊新增按鈕</p>
-      </div>
-    `;
+       <div class="empty-state">
+         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+           <path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"></path>
+         </svg>
+         <p>尚未排除任何視窗</p>
+         <p class="hint">從左側選擇視窗並點擊新增按鈕</p>
+       </div>
+     `;
         return;
     }
 
     const html = windows.map(window => `
-    <div class="window-item" data-hwnd="${window.hwnd}">
-      <div class="window-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"></path>
-        </svg>
-      </div>
-      <div class="window-info">
-        <div class="window-title" title="${escapeHtml(window.title)}">
-          ${escapeHtml(window.title)}
-        </div>
-        <div class="window-process" title="${escapeHtml(window.processName)}">
-          ${escapeHtml(window.processName)}
-        </div>
-      </div>
-    </div>
-  `).join('');
+     <div class="window-item" data-hwnd="${window.hwnd}">
+       <div class="window-icon">
+         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+           <path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"></path>
+         </svg>
+       </div>
+       <div class="window-info">
+         <div class="window-title" title="${escapeHtml(window.title)}">
+           ${escapeHtml(window.title)}
+         </div>
+         <div class="window-process" title="${escapeHtml(window.processName)}">
+           ${escapeHtml(window.processName)}
+         </div>
+       </div>
+     </div>
+   `).join('');
 
     elements.excludedList.innerHTML = html;
 
@@ -270,6 +277,11 @@ async function handleAddExclusion() {
         if (result.success) {
             showNotification(`已排除視窗: ${selectedWindow.title}`, 'success');
 
+            // 成功後從失敗列表中移除（如果有的話）
+            if (failedWindows.has(selectedWindow.hwnd)) {
+                failedWindows.delete(selectedWindow.hwnd);
+            }
+
             // 重新載入列表
             await loadExcludedWindows();
 
@@ -283,6 +295,15 @@ async function handleAddExclusion() {
             updateStatus('就緒', 'success');
         } else {
             showNotification(result.message, 'error');
+
+            // 如果是權限錯誤，記錄下來
+            if (result.message.includes('權限不足') || result.message.includes('Error Code: 5')) {
+                failedWindows.add(selectedWindow.hwnd);
+                // 強制刷新列表以顯示鎖定圖示
+                lastWindowsHash = '';
+                renderWindowList(allWindows);
+            }
+
             updateStatus('就緒', 'success');
         }
     } catch (error) {

@@ -1,79 +1,52 @@
-# Window Exclusion Tool
+# Windows Graphics Capture - Window Exclusion Tool
 
-Windows Graphics Capture 視窗排除工具 - 保護您的隱私內容不被螢幕擷取
+一個基於 Electron 的應用程式，旨在管理和排除特定視窗，使其不被 Windows Graphics Capture API (如 OBS, Discord 直播) 擷取。
 
-## 功能特色
+## ⚠️ 重要技術限制
 
-- ✅ 偵測並列出系統中所有執行中的視窗
-- ✅ 一鍵排除視窗，防止被螢幕擷取工具捕捉
-- ✅ 現代化深色主題介面
-- ✅ 即時視窗監控與更新
-- ✅ 支援搜尋和篩選視窗
-- ✅ 永久儲存排除設定
+**目前的版本僅支援隱藏應用程式自身的視窗。**
 
-## 系統需求
+由於 Windows API `SetWindowDisplayAffinity` 的安全限制，**一個進程無法直接修改另一個進程的視窗擷取屬性**。這意味著：
 
-- Windows 10 (1903+) / Windows 11
-- Node.js v16.x 或更高版本
+- ✅ 您可以隱藏此工具本身的視窗。
+- ❌ 您無法直接隱藏其他應用程式（如 Chrome, 遊戲, CMD）的視窗，即使使用系統管理員權限也會收到 `Access Denied (Error 5)`。
 
-## 安裝
+### 解決方案 (開發中)
 
-```bash
-# 安裝依賴
-npm install
+要突破此限制，需要使用 **DLL 注入 (DLL Injection)** 技術：
+1. 將一個特製的 DLL 注入到目標進程中。
+2. 在目標進程內部調用 `SetWindowDisplayAffinity`。
 
-# 啟動應用程式
-npm start
+這將是下一階段的開發重點。
 
-# 開發模式（開啟 DevTools）
-npm run dev
-```
+## 功能
 
-## 使用方法
+- **視窗列舉**: 列出當前所有可見的視窗。
+- **視窗過濾**: 自動過濾系統視窗和無效視窗。
+- **排除管理**: 
+  - 標記視窗為 "Excluded" (不被擷取)。
+  - 恢復視窗為正常狀態。
+- **狀態保存**: 自動記住您的排除設定。
 
-1. 啟動應用程式
-2. 在左側面板瀏覽所有執行中的視窗
-3. 選擇要排除的視窗
-4. 點擊中央的「新增排除」按鈕（+）
-5. 被排除的視窗將不會被螢幕擷取工具捕捉
+## 安裝與執行
 
-### 移除排除
+1. 安裝依賴:
+   ```bash
+   npm install
+   ```
 
-1. 在右側面板選擇已排除的視窗
-2. 點擊中央的「移除排除」按鈕（-）
-3. 視窗將恢復為可被擷取狀態
+2. 啟動應用程式:
+   ```bash
+   npm start
+   ```
 
-## 技術架構
+## 技術棧
 
-- **框架**: Electron
-- **後端**: Node.js + FFI-NAPI
-- **Windows API**: SetWindowDisplayAffinity
-- **介面**: HTML5 + CSS3 + JavaScript
+- **Electron**: 桌面應用程式框架。
+- **Koffi**: 高性能 Node.js FFI 庫，用於調用 Windows API。
+- **Windows API**: User32.dll, Kernel32.dll。
 
-## 注意事項
+## 錯誤代碼說明
 
-⚠️ **權限限制**: 由於 Windows 安全機制，某些系統視窗（如 UAC 提示）可能無法被排除
-
-⚠️ **視窗關閉**: 如果被排除的視窗關閉後重新開啟，需要重新套用排除設定
-
-## 開發
-
-```bash
-# 安裝開發依賴
-npm install
-
-# 啟動開發模式
-npm run dev
-
-# 建置應用程式
-npm run build
-```
-
-## 授權
-
-MIT License
-
-## 相關資源
-
-- [Windows Graphics Capture API 文件](https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowdisplayaffinity)
-- [Electron 文件](https://www.electronjs.org/docs)
+- **Error 5 (Access Denied)**: 嘗試操作非本程式創建的視窗（需要 DLL 注入解決）。
+- **Error 1400 (Invalid Window Handle)**: 目標視窗已關閉或不存在。
